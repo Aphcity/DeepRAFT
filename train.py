@@ -180,8 +180,8 @@ def main(user_args):
                 writer.add_scalar('val/apgd_stamp_acc', mix_stamp_acc, global_step)
                 writer.add_scalar('val/apgd_acc', mix_acc, global_step)
             if global_step % args.save_interval == 0:
-                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pth"))
-                torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pt"))
+                torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
             
             # write data into tensorboard
             if global_step % 20 == 0:
@@ -204,8 +204,8 @@ def main(user_args):
         scheduler.step()
 
     writer.close()
-    torch.save(encoder, os.path.join(args.saved_models, "encoder.pth"))
-    torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+    torch.save(encoder, os.path.join(args.saved_models, "encoder.pt"))
+    torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
     # Evaluations
     evaluate(encoder, detector, test_loader, args)
     os.system('tar cvf {}.tar ./results/{}/'.format(args.run_name, args.run_name))
@@ -324,7 +324,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--run_name', type=str, default='test')
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--max_epoch', type=int, default=2000)
     parser.add_argument('--log_interval', type=int, default=2000)
     parser.add_argument('--save_interval', type=int, default=5000)

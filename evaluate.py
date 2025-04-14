@@ -276,7 +276,7 @@ def evaluate(encoder, detector, test_loader, args):
     plt_values = [ori_acc, rtt_acc, crp_acc, wrp_acc, blr_acc, jtr_acc, jpg_acc, mix_acc]
     plt_values = (np.array(plt_values)/tn)*100
     my_xticks = ['Original', 'Rotation', 'Cropping', 'Warping', 'Gaussian Blur', 'Color Filter', 'JPEG Compression', 'Mixed Corruptions']
-    plt.style.use('seaborn-bright')
+    plt.style.use('seaborn-v0_8-bright')
     plt.figure()
     plt.bar(range(len(plt_values)), plt_values)
     plt.ylabel('Evaluation Method')
@@ -588,7 +588,7 @@ def evaluate(encoder, detector, test_loader, args):
     header = ['rd_nonstamp_acc','rd_stamp_acc','rd_acc', 'fgsm_nonstamp_acc','fgsm_stamp_acc','fgsm_acc', 'pgd_nonstamp_acc','pgd_stamp_acc','pgd_acc', 'sqr_nonstamp_acc','sqr_stamp_acc','sqr_acc','pgdce_nonstamp_acc','pgdce_stamp_acc','pgdce_acc', 'auto_nonstamp_acc','auto_stamp_acc','auto_acc', 'automix_nonstamp_acc','automix_stamp_acc','automix_acc']    
     for i in range(len(fig_names)):
         fig_name = fig_names[i]
-        plt.style.use('seaborn-bright')
+        plt.style.use('seaborn-v0_8-bright')
         plt.figure()
         df.plot(x="epsilon", y=[header[i*3], header[i*3+1], header[i*3+2]], kind="bar", legend=False)
         plt.ylabel('Detection Accuracy')

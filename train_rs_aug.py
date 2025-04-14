@@ -166,8 +166,8 @@ def main(user_args):
                 writer.add_scalar('val/apgd_stamp_acc', apgd_stamp_acc, global_step)
                 writer.add_scalar('val/apgd_acc', apgd_acc, global_step)
             if global_step % args.save_interval == 0:
-                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pth"))
-                torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pt"))
+                torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
             
             # write data into tensorboard
             if global_step % 20 == 0:
@@ -191,8 +191,8 @@ def main(user_args):
         scheduler.step()
 
     writer.close()
-    torch.save(encoder, os.path.join(args.saved_models, "encoder.pth"))
-    torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+    torch.save(encoder, os.path.join(args.saved_models, "encoder.pt"))
+    torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
     # Evaluations
     evaluate(encoder, detector, test_loader, args)
     
@@ -310,8 +310,8 @@ if __name__ == '__main__':
         os.system('rm -f mirflickr25k.zip')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run_name', type=str, default='test')
-    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--run_name', type=str, default='test_aug')
+    parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--max_epoch', type=int, default=2000)
     parser.add_argument('--log_interval', type=int, default=1000)
     parser.add_argument('--save_interval', type=int, default=5000)
@@ -327,8 +327,8 @@ if __name__ == '__main__':
     parser.add_argument('--std', type=float, default=0.5)
     parser.add_argument('--reg_start', type=int, default=0)
     parser.add_argument('--aug_w', type=float, default=1)
-    parser.add_argument('--aug_start', type=int, default=0)
-    parser.add_argument('--aug_end', type=int, default=1)
+    parser.add_argument('--aug_start', type=int, default=10000)
+    parser.add_argument('--aug_end', type=int, default=20000)
     parser.add_argument('--adv_w', type=float, default=1)
     parser.add_argument('--adv_start', type=int, default=0)
     parser.add_argument('--adv_end', type=int, default=1)
