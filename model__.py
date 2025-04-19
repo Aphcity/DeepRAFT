@@ -18,8 +18,6 @@ class Dense(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.activation = activation
-        if activation == 'relu':
-            self.activation = nn.ReLU(inplace=True)
         self.kernel_initializer = kernel_initializer
 
         self.linear = nn.Linear(in_features, out_features)
@@ -32,12 +30,13 @@ class Dense(nn.Module):
     def forward(self, inputs):
         outputs = self.linear(inputs)
         if self.activation is not None:
-            outputs = self.activation(outputs)
+            if self.activation == 'relu':
+                outputs = nn.ReLU(inplace=True)(outputs)
         return outputs
 
 
 class Conv2D(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, activation=None, strides=1):
+    def __init__(self, in_channels, out_channels, kernel_size=3, activation='relu', strides=1):
         super(Conv2D, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -45,26 +44,17 @@ class Conv2D(nn.Module):
         self.activation = activation
         self.strides = strides
 
-        # Map activation names to actual activation functions
-        activation_map = {
-            'relu': nn.ReLU(inplace=True),
-            None: None  # No activation
-        }
-
-        if activation not in activation_map:
-            raise ValueError(f"Unsupported activation: {activation}")
-
-        self.activation = activation_map[activation]
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, strides, padding=(kernel_size - 1) // 2)
-
-        # self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, strides, int((kernel_size - 1) / 2))
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, strides, int((kernel_size - 1) / 2))
         # default: using he_normal as the kernel initializer
         nn.init.kaiming_normal_(self.conv.weight)
 
     def forward(self, inputs):
         outputs = self.conv(inputs)
         if self.activation is not None:
-            outputs = self.activation(outputs)
+            if self.activation == 'relu':
+                outputs = nn.ReLU(inplace=True)(outputs)
+            else:
+                raise NotImplementedError
         return outputs
 
 
@@ -81,8 +71,6 @@ class StegaStampEncoder(nn.Module):
         super(StegaStampEncoder, self).__init__()
         self.hidden_dense = Dense(100, 7500, activation='relu', kernel_initializer='he_normal')
         self.embedder = ImageEmbedder()
-        self.upsample8 = nn.Upsample(scale_factor=(8, 8))
-        self.upsample2 = nn.Upsample(scale_factor=(2, 2))
         self.conv1 = Conv2D(6, 32, 3, activation='relu')
         self.conv2 = Conv2D(32, 32, 3, activation='relu', strides=2)
         self.conv3 = Conv2D(32, 64, 3, activation='relu', strides=2)
@@ -104,23 +92,23 @@ class StegaStampEncoder(nn.Module):
         hidden = self.embedder(image)
         hidden = self.hidden_dense(hidden)
         hidden = hidden.reshape(-1, 3, 50, 50)
-        hidden = self.upsample8(hidden)
+        hidden = nn.Upsample(scale_factor=(8, 8))(hidden)
         inputs = torch.cat([hidden, image], dim=1)
         conv1 = self.conv1(inputs)
         conv2 = self.conv2(conv1)
         conv3 = self.conv3(conv2)
         conv4 = self.conv4(conv3)
         conv5 = self.conv5(conv4)
-        up6 = self.up6(self.upsample2(conv5))
+        up6 = self.up6(nn.Upsample(scale_factor=(2, 2))(conv5))
         merge6 = torch.cat([conv4, up6], dim=1)
         conv6 = self.conv6(merge6)
-        up7 = self.up7(self.upsample2(conv6))
+        up7 = self.up7(nn.Upsample(scale_factor=(2, 2))(conv6))
         merge7 = torch.cat([conv3, up7], dim=1)
         conv7 = self.conv7(merge7)
-        up8 = self.up8(self.upsample2(conv7))
+        up8 = self.up8(nn.Upsample(scale_factor=(2, 2))(conv7))
         merge8 = torch.cat([conv2, up8], dim=1)
         conv8 = self.conv8(merge8)
-        up9 = self.up9(self.upsample2(conv8))
+        up9 = self.up9(nn.Upsample(scale_factor=(2, 2))(conv8))
         merge9 = torch.cat([conv1, up9, inputs], dim=1)
         conv9 = self.conv9(merge9)
         residual = self.residual(conv9)

@@ -1,6 +1,9 @@
 import os
 import yaml
 import random
+
+from torch.utils.mobile_optimizer import optimize_for_mobile
+
 import model
 import numpy as np
 from glob import glob
@@ -166,8 +169,15 @@ def main(user_args):
                 writer.add_scalar('val/apgd_stamp_acc', apgd_stamp_acc, global_step)
                 writer.add_scalar('val/apgd_acc', apgd_acc, global_step)
             if global_step % args.save_interval == 0:
-                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pt"))
-                torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
+                torch.save(encoder,  os.path.join(args.saved_models,  "encoder.pth"))
+                torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+                encoder_scripted = torch.jit.script(encoder)  # Convert to ScriptModule
+                encoder_mobile = optimize_for_mobile(encoder_scripted)
+                detector_scripted = torch.jit.script(detector)  # Convert to ScriptModule
+                detector_mobile = optimize_for_mobile(detector_scripted)
+                encoder_mobile._save_for_lite_interpreter(os.path.join(args.saved_models, "encoder.pt"))
+                detector_mobile._save_for_lite_interpreter(os.path.join(args.saved_models, "detector.pt"))
+
             
             # write data into tensorboard
             if global_step % 20 == 0:
@@ -191,8 +201,17 @@ def main(user_args):
         scheduler.step()
 
     writer.close()
-    torch.save(encoder, os.path.join(args.saved_models, "encoder.pt"))
-    torch.save(detector, os.path.join(args.saved_models, "detector.pt"))
+    torch.save(encoder, os.path.join(args.saved_models, "encoder.pth"))
+    torch.save(detector, os.path.join(args.saved_models, "detector.pth"))
+    encoder_scripted = torch.jit.script(encoder)  # Convert to ScriptModule
+    encoder_mobile = optimize_for_mobile(encoder_scripted)
+    detector_scripted = torch.jit.script(detector)  # Convert to ScriptModule
+    detector_mobile = optimize_for_mobile(detector_scripted)
+    cpu = torch.device('cpu')
+    encoder_mobile.to(cpu)
+    detector_mobile.to(cpu)
+    encoder_mobile._save_for_lite_interpreter(os.path.join(args.saved_models, "encoder.pt"))
+    detector_mobile._save_for_lite_interpreter(os.path.join(args.saved_models, "detector.pt"))
     # Evaluations
     evaluate(encoder, detector, test_loader, args)
     
@@ -310,8 +329,8 @@ if __name__ == '__main__':
         os.system('rm -f mirflickr25k.zip')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run_name', type=str, default='test_aug_32')
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--run_name', type=str, default='test_mobile_4')
+    parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--max_epoch', type=int, default=2000)
     parser.add_argument('--log_interval', type=int, default=1000)
     parser.add_argument('--save_interval', type=int, default=5000)
